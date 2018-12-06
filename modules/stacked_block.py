@@ -9,10 +9,10 @@ Created on Tue Dec  4 15:25:09 2018
 import numpy as np
 import matplotlib.pyplot as plt
 
-h = 1E-5                    # Step size h (in mm)
+h = 0.5                     # Step size h (in mm)
 k_m = 0.15                  # Conductivity of silicon Microchip in W/mm K
 k_c = 0.23                  # Conductivity of ceramic block in W/mm K
-del_T = 0.5 / k_m           # Change in temperature of microprocessor every s
+del_T = h ** 2 * 0.5 / k_m  # Change in temperature of microprocessor every s
 T_a = 20                    # Ambient temperature
 alpha_m = h * 2.62 / k_m    # Constant for natural convection
 alpha_c = h * 2.62 / k_c    # Constant for natural convection
@@ -30,6 +30,14 @@ def update_boundaries(mesh):
     c_dl_mesh = mesh[rows-4:-1, 1:4]    # Slice to update bottom left of ceramic
     c_dr_mesh = mesh[rows-4:-1, 18:-1]  # Slice to update bottom right of ceramic
     m_dd_mesh = mesh[rows-3:, 4:18]     # Slice to update bottom of microprocessor
+    
+    all_mesh = [c_l_mesh, c_r_mesh, c_u_mesh, c_dl_mesh, c_dr_mesh, m_dd_mesh]
+    for k in all_mesh:
+        for j in range(len(k[0])):
+            for i in range(len(k)):
+                if k[i][j] < 20:
+#                    print(k[i][j])
+                    k[i][j] = 20
     
     c_l_mesh[:,0] = c_l_mesh[:,-1] - alpha_c * (c_l_mesh[:,1] - T_a) ** (4/3)
     c_r_mesh[:,-1] = c_r_mesh[:,0] - alpha_c * (c_r_mesh[:,1] - T_a) ** (4/3)
@@ -58,7 +66,7 @@ print(mesh)
 all_mesh = []
 
 n = 0
-while (True):
+while (n < 10000):
     update = mesh.copy()
     # Update matrix for the ceramic block
     for j in range(1, cols-1):
@@ -98,4 +106,5 @@ plt.plot(y, n, "--", c='g')
 plt.figure(2)
 mesh_min = mesh[1:-1, 1:-1].min() - 0.01
 mesh_max = mesh[1:-1, 1:-1].max()
-plt.imshow(mesh, vmin=mesh_min, vmax=mesh_max)
+masked = np.ma.masked_where(mesh < 0.01, mesh)
+plt.imshow(masked, cmap="rainbow")

@@ -70,4 +70,5 @@ plt.plot(y, m, "--", c='b')
 
 mesh_min = mesh[1:-1, 1:-1].min() - 0.01
 mesh_max = mesh[1:-1, 1:-1].max()
-plt.imshow(mesh, vmin=mesh_min, vmax=mesh_max)
+masked = np.ma.masked_where(mesh < 0.01, mesh)
+plt.imshow(masked, cmap='rainbow')

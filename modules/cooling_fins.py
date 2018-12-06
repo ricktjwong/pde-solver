@@ -9,11 +9,11 @@ Created on Tue Dec  4 22:58:42 2018
 import numpy as np
 import matplotlib.pyplot as plt
 
-h = 1E-5                    # Step size h (in mm)
+h = 0.05                    # Step size h (in mm)
 k_m = 0.150                 # Conductivity of silicon Microchip in W/mm K
 k_c = 0.230                 # Conductivity of ceramic block in W/mm K
 k_a = 0.248                 # Conductivity of aluminium fin in W/mm K
-del_T = 0.5 / k_m           # Change in temperature of microprocessor every s
+del_T = h ** 2 * 0.5 / k_m  # Change in temperature of microprocessor every s
 T_a = 20                    # Ambient temperature
 alpha_m = h * 2.62 / k_m    # Constant for natural convection for silicon
 alpha_c = h * 2.62 / k_c    # Constant for natural convection for ceramic
@@ -40,11 +40,39 @@ def update_boundaries(m, c):
     r_mesh = m[1:-1, cols-3:]
     u_mesh = m[0:3, 1:-1]
     d_mesh = m[rows-3:, 1:-1]
-    
-    l_mesh[:,0] = l_mesh[:,-1] - c * (l_mesh[:,1] - T_a) ** (4/3)
-    r_mesh[:,-1] = r_mesh[:,0] - c * (r_mesh[:,1] - T_a) ** (4/3)
-    u_mesh[0] = u_mesh[-1] - c * (u_mesh[1] - T_a) ** (4/3)
-    d_mesh[-1] = d_mesh[0] - c * (d_mesh[1] - T_a) ** (4/3)
+
+#    all_mesh = [l_mesh, r_mesh, u_mesh, d_mesh]
+    for i in range(len(l_mesh[:,1])):
+        if l_mesh[:,1][i] < 20:
+            l_mesh[:,1][i] = 20
+        else:
+            l_mesh[i][0] = l_mesh[i][-1] - c * (l_mesh[i][1] - T_a) ** (4/3)
+    for i in range(len(r_mesh[:,1])):
+        if r_mesh[:,1][i] < 20:
+            r_mesh[:,1][i] = 20
+        else:
+            r_mesh[i][-1] = r_mesh[i][0] - c * (r_mesh[i][1] - T_a) ** (4/3)
+    for i in range(len(u_mesh[1])):
+        if u_mesh[1][i] < 20:
+            u_mesh[1][i] = 20
+        else:
+            u_mesh[:,i][0] = u_mesh[:,i][-1] - c * (u_mesh[:,i][1] - T_a) ** (4/3)
+    for i in range(len(d_mesh[1])):
+        if d_mesh[1][i] < 20:
+            d_mesh[1][i] = 20    
+        else:
+            d_mesh[:,i][-1] = d_mesh[:,i][0] - c * (d_mesh[:,i][1] - T_a) ** (4/3)
+#    for k in all_mesh:
+#        for j in range(len(k[0])):
+#            for i in range(len(k)):
+#                if k[i][j] < 20:
+#                    print(k[i][j])
+#                    k[i][j] = 20
+
+#    l_mesh[:,0] = l_mesh[:,-1] - c * (l_mesh[:,1] - T_a) ** (4/3)
+#    r_mesh[:,-1] = r_mesh[:,0] - c * (r_mesh[:,1] - T_a) ** (4/3)
+#    u_mesh[0] = u_mesh[-1] - c * (u_mesh[1] - T_a) ** (4/3)
+#    d_mesh[-1] = d_mesh[0] - c * (d_mesh[1] - T_a) ** (4/3)
     
     m[1:-1, 0:3] = l_mesh
     m[1:-1, cols-3:] = r_mesh
@@ -90,7 +118,7 @@ while (n < 1000):
     for j in range(4, 18):
         update[r][j] = 1/4 * (mesh[r-1][j] + mesh[r+1][j] 
                             + mesh[r][j-1] + mesh[r][j+1])
-    # Update matrix for the fins
+    # Update matrix for the fins        
     for k in range(4):
         for j in range(1 + 6*k, 3 + 6*k):
             for i in range(1, 31):
@@ -100,7 +128,6 @@ while (n < 1000):
     update[35][4:18] += del_T
 #    if np.linalg.norm(update[1:-1, 1:-1]/mesh[1:-1, 1:-1] - 1) < 1E-4:
 #        break
-    
     c_mesh, m_mesh, f_mesh = update_all_components(update)
     update = update_mesh(update, c_mesh, m_mesh, f_mesh).copy()
     mesh = update.copy()
@@ -116,6 +143,5 @@ plt.figure(2)
 plt.plot(y, x, "--", c='r')
 
 plt.figure(3)
-mesh_min = mesh[1:-1, 1:-1].min() - 0.01
-mesh_max = mesh[1:-1, 1:-1].max()
-plt.imshow(mesh, vmin=mesh_min, vmax=mesh_max)
+masked = np.ma.masked_where(mesh < 0.01, mesh)
+plt.imshow(masked, cmap="rainbow")
