@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Dec  4 22:58:42 2018
-
 @author: ricktjwong
 """
 
@@ -18,19 +17,18 @@ T_a = 20                    # Ambient temperature
 alpha_m = h * 2.62 / k_m    # Constant for natural convection for silicon
 alpha_c = h * 2.62 / k_c    # Constant for natural convection for ceramic
 alpha_a = h * 2.62 / k_a    # Constant for natural convection for aluminium
-scale = 1
-rows = 35 * scale + 2
-cols = 20 * scale + 2
+rows = 37
+cols = 22
 
 
 def setup():
     mesh = np.zeros((rows, cols))
-    mesh[1:(30*scale)+1, 1:(2*scale)+1] = T_a                     # Initialise fin 1 to T_a
-    mesh[1:(30*scale)+1, (6*scale)+1:(8*scale)+1] = T_a           # Initialise fin 2 to T_a
-    mesh[1:(30*scale)+1, (12*scale)+1:(14*scale)+1] = T_a         # Initialise fin 3 to T_a
-    mesh[1:(30*scale)+1, (18*scale)+1:(20*scale)+1] = T_a         # Initialise fin 4 to T_a
-    mesh[(30*scale)+1:(34*scale)+1, 1:-1] = T_a                   # Initialise the ceramic block at T_a
-    mesh[34*scale+1:35*scale+1, 3*scale+1:17*scale+1] = T_a       # Initialise the microprocessor at T_a
+    mesh[1:31, 1:3] = T_a           # Initialise fin 1 to T_a
+    mesh[1:31, 7:9] = T_a           # Initialise fin 2 to T_a
+    mesh[1:31, 13:15] = T_a         # Initialise fin 3 to T_a
+    mesh[1:31, 19:21] = T_a         # Initialise fin 4 to T_a
+    mesh[31:35, 1:-1] = T_a         # Initialise the ceramic block at T_a
+    mesh[35][4:18] = T_a            # Initialise the microprocessor at T_a
     return mesh
 
 
@@ -54,52 +52,51 @@ def update_boundaries(m, c):
     
 
 def update_all_components(m):
-    c_mesh = m[30*scale:34*scale+2].copy()
+    c_mesh = m[30:36].copy()
     update_boundaries(c_mesh, alpha_c)
-    m_mesh = m[34*scale-1:, 3*scale:17*scale+2].copy()
+    m_mesh = m[33:, 3:19].copy()
     update_boundaries(m_mesh, alpha_m)
     # 4 fins of width 2px, height 30, spacing 4
-    f_mesh = [m[0:30*scale+2, 6*i*scale:(2+6*i)*scale+2].copy() for i in range(4)]
+    f_mesh = [m[0:32, 0 + 6*i: 4 + 6*i].copy() for i in range(4)]
     for f in f_mesh:
         update_boundaries(f, alpha_a)
     return c_mesh, m_mesh, f_mesh
 
 
 def update_mesh(m, c_mesh, m_mesh, f_mesh):
-    m[30*scale:34*scale+2] = c_mesh.copy()
+    m[30:36] = c_mesh.copy()
     for i in range(4):
-        m[0:30*scale+1, 6*i*scale:(2+6*i)*scale+2] = f_mesh[i][0:-1].copy()
-    m[34*scale+1:, 3*scale:17*scale+2] = m_mesh[2:].copy()
+        m[0:31, 0 + 6*i: 4 + 6*i] = f_mesh[i][0:-1].copy()
+    m[35:, 4:18] = m_mesh[2:, 1:-1].copy()
     return m
 
 mesh = setup()
-plt.imshow(mesh)
 c_mesh, m_mesh, f_mesh = update_all_components(mesh)
 mesh = update_mesh(mesh, c_mesh, m_mesh, f_mesh).copy()
 
 all_mesh = []
-plt.imshow(mesh)
 
 n = 0
-while (n < 1000):
+while (n < 200):
     update = mesh.copy()
     # Update matrix for the ceramic block
     for j in range(1, cols-1):
-        for i in range(30*scale+1, 34*scale+1):
+        for i in range(31, 35):
             update[i][j] = 1/4 * (mesh[i-1][j] + mesh[i+1][j] 
                                 + mesh[i][j-1] + mesh[i][j+1])
     # Update matrix for the microprocessor
-    for j in range(3*scale+1, 17*scale+1):
-        for i in range(34*scale+1, 35*scale+1):
-            update[i][j] = 1/4 * (mesh[i-1][j] + mesh[i+1][j] 
-                                + mesh[i][j-1] + mesh[i][j+1])
+    r = 35
+    for j in range(4, 18):
+        update[r][j] = 1/4 * (mesh[r-1][j] + mesh[r+1][j] 
+                            + mesh[r][j-1] + mesh[r][j+1])
     # Update matrix for the fins        
     for k in range(4):
-        for j in range(1 + 6*k*scale, (2+6*k)*scale + 1):
-            for i in range(1, 30*scale+1):
+        for j in range(1 + 6*k, 3 + 6*k):
+            for i in range(1, 31):
                 update[i][j] = 1/4 * (mesh[i-1][j] + mesh[i+1][j] 
                                     + mesh[i][j-1] + mesh[i][j+1])
-    update[34*scale+1:35*scale+1, 3*scale+1:17*scale+1] += del_T
+        
+    update[35][4:18] += del_T
 #    if np.linalg.norm(update[1:-1, 1:-1]/mesh[1:-1, 1:-1] - 1) < 1E-4:
 #        break
     c_mesh, m_mesh, f_mesh = update_all_components(update)
@@ -110,8 +107,7 @@ while (n < 1000):
 
 x = []
 for i in all_mesh:
-#    x.append(i[342][34])
-    x.append(i[31][1])    
+    x.append(i[31][1])
 y = [i for i in range(len(x))]
 
 plt.figure(2)
