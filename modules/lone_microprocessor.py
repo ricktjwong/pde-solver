@@ -13,11 +13,11 @@ plt.rcParams['lines.linewidth'] = 1.4
 plt.rcParams.update({'figure.autolayout': True})
 plt.rcParams['mathtext.default'] = 'regular'
 
-h = 1E-5                    # Step size h (in mm)
-k = 0.15                    # Conductivity of silicon Microchip in W/mm K
+h = 1E-3                    # Step size h (in mm)
+k = 150                    # Conductivity of silicon Microchip in W/mm K
 T_a = 20                    # Ambient temperature
 alpha = h * 2.62 / k        # Constant for natural convection
-del_T = 0.5 / k             # Change in temperature of microprocessor every s
+del_T = 0.25 * h**2 * 500 * 1E6 / k             # Change in temperature of microprocessor every s
 rows = 4
 cols = 16
 
@@ -42,10 +42,8 @@ def update_boundaries(mesh):
     return mesh
 
 mesh = np.zeros((rows, cols))
-mesh[1:-1, 1:-1] = 20      # Initialise the inner mesh with T > T_a
+mesh[1:-1, 1:-1] = 20      # Initialise the inner mesh with T_a
 mesh = update_boundaries(mesh).copy()
-
-print(mesh)
 
 all_mesh = []
 
@@ -64,8 +62,6 @@ while (n < 20000):
     all_mesh.append(mesh)
     n += 1
 
-print(mesh)
-
 x = []
 m = []
 for i in all_mesh:
@@ -75,7 +71,7 @@ y = [i for i in range(len(m))]
 plt.figure(1)
 #plt.plot(y, x, "--", c='r')
 plt.plot(y, m, "--", c='b')
-plt.savefig('temp_comparison.pdf', format='pdf', dpi=3000)
+#plt.savefig('temp_comparison.pdf', format='pdf', dpi=3000)
 
 plt.figure(2)
 mesh_min = mesh[1:-1, 1:-1].min() - 0.01

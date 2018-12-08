@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Dec  4 22:58:42 2018
+Created on Sat Dec  8 01:53:55 2018
 
 @author: ricktjwong
 """
@@ -9,15 +9,15 @@ Created on Tue Dec  4 22:58:42 2018
 import numpy as np
 import matplotlib.pyplot as plt
 
-h = 1E-3                  # Step size h (in m)
-k_m = 150                 # Conductivity of silicon Microchip in W/m K
-k_c = 230                 # Conductivity of ceramic block in W/m K
-k_a = 248                 # Conductivity of aluminium fin in W/m K
-rho = 0.25 * h ** 2 * 500 * 1E6 / k_m  # Change in temperature of microprocessor every s
-T_a = 20                    # Ambient temperature
-alpha_m = h * 2.62 / k_m    # Constant for natural convection for silicon
-alpha_c = h * 2.62 / k_c    # Constant for natural convection for ceramic
-alpha_a = h * 2.62 / k_a    # Constant for natural convection for aluminium
+h = 1E-3                                    # Step size h (in m)
+k_m = 150                                   # Conductivity of silicon Microchip in W/m K
+k_c = 230                                   # Conductivity of ceramic block in W/m K
+k_a = 248                                   # Conductivity of aluminium fin in W/m K
+rho = 0.25 * h ** 2 * 500 * 1E6 / k_m       # Change in temperature of microprocessor every s
+T_a = 20                                    # Ambient temperature
+alpha_m = h * 2 / k_m * (11.54 + 5.7 * 20)  # Constant for force convection for silicon
+alpha_c = h * 2 / k_c * (11.54 + 5.7 * 20)  # Constant for force convection for ceramic
+alpha_a = h * 2 / k_a * (11.54 + 5.7 * 20)  # Constant for force convection for aluminium
 scale = 1
 rows = 35 * scale + 2
 cols = 20 * scale + 2
@@ -42,10 +42,10 @@ def update_boundaries(m, c):
     u_mesh = m[0:3, 1:-1]
     d_mesh = m[rows-3:, 1:-1]
 
-    l_mesh[:,0] = l_mesh[:,-1] - c * (l_mesh[:,1] - T_a) ** (4/3)
-    r_mesh[:,-1] = r_mesh[:,0] - c * (r_mesh[:,1] - T_a) ** (4/3)
-    u_mesh[0] = u_mesh[-1] - c * (u_mesh[1] - T_a) ** (4/3)
-    d_mesh[-1] = d_mesh[0] - c * (d_mesh[1] - T_a) ** (4/3)
+    l_mesh[:,0] = l_mesh[:,-1] - c * (l_mesh[:,1] - T_a)
+    r_mesh[:,-1] = r_mesh[:,0] - c * (r_mesh[:,1] - T_a)
+    u_mesh[0] = u_mesh[-1] - c * (u_mesh[1] - T_a)
+    d_mesh[-1] = d_mesh[0] - c * (d_mesh[1] - T_a)
     
     m[1:-1, 0:3] = l_mesh
     m[1:-1, cols-3:] = r_mesh
@@ -101,7 +101,7 @@ while (True):
                                     + mesh[i][j-1] + mesh[i][j+1])
     update[34*scale+1:35*scale+1, 3*scale+1:17*scale+1] += rho
     if np.mean(update[34*scale+1:35*scale+1, 3*scale+1:17*scale+1]) / \
-       np.mean(mesh[34*scale+1:35*scale+1, 3*scale+1:17*scale+1]) - 1 < 1E-5:
+       np.mean(mesh[34*scale+1:35*scale+1, 3*scale+1:17*scale+1]) - 1 < 1E-6:
         break
     c_mesh, m_mesh, f_mesh = update_all_components(update)
     update = update_mesh(update, c_mesh, m_mesh, f_mesh).copy()
@@ -111,7 +111,6 @@ while (True):
 
 x = []
 for i in all_mesh:
-#    x.append(i[342][34])
     x.append(i[31][1])    
 y = [i for i in range(len(x))]
 

@@ -9,10 +9,10 @@ Created on Tue Dec  4 17:22:14 2018
 import numpy as np
 import matplotlib.pyplot as plt
 
-h = 1E-5                    # Step size h (in mm)
-k_m = 0.15                  # Conductivity of silicon Microchip in W/mm K
-k_c = 0.23                  # Conductivity of ceramic block in W/mm K
-del_T = 0.5 / k_m           # Change in temperature of microprocessor every s
+h = 1E-3                    # Step size h (in m)
+k_m = 150                   # Conductivity of silicon Microchip in W/mm K
+k_c = 230                   # Conductivity of ceramic block in W/mm K
+del_T = 0.25 * h ** 2 * 500 * 1E6 / k_m           # Change in temperature of microprocessor every s
 T_a = 20                    # Ambient temperature
 alpha_m = h * 2.62 / k_m    # Constant for natural convection
 alpha_c = h * 2.62 / k_c    # Constant for natural convection
@@ -48,10 +48,8 @@ def update_boundaries(mesh):
 mesh = np.zeros((rows, cols))
 mesh[1, 1:-1] = 20
 mesh[2:-1, 1:-1] = 20      # Initialise the inner mesh with T > T_a
-print(mesh)
 
 mesh = update_boundaries(mesh).copy()
-print(mesh)
 
 all_mesh = []
 
@@ -85,4 +83,5 @@ plt.plot(y, m, "--", c='r')
 plt.figure(2)
 mesh_min = mesh[1:-1, 1:-1].min() - 0.01
 mesh_max = mesh[1:-1, 1:-1].max()
-plt.imshow(mesh, vmin=mesh_min, vmax=mesh_max)
+masked = np.ma.masked_where(mesh < 0.01, mesh)
+plt.imshow(masked, cmap="rainbow")
