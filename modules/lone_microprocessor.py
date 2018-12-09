@@ -48,32 +48,30 @@ mesh = update_boundaries(mesh).copy()
 all_mesh = []
 
 n = 0
-while (n < 20000):
+while (True):
     update = mesh.copy()
     for j in range(1, cols-1):
         for i in range(1, rows-1):
             update[i][j] = 1/4 * (mesh[i-1][j] + mesh[i+1][j] 
                                 + mesh[i][j-1] + mesh[i][j+1])
-    update[1:-1, 1:-1] += del_T       
-#    if np.linalg.norm(update[1:-1, 1:-1]/mesh[1:-1, 1:-1] - 1) < 1E-4:
-#        break
+    update[1:-1, 1:-1] += del_T
+    if np.mean(update[1:-1, 1:-1]) / \
+       np.mean(mesh[1:-1, 1:-1]) - 1 < 1E-6:
+        break
     update = update_boundaries(update).copy()
     mesh = update.copy()
     all_mesh.append(mesh)
     n += 1
 
 x = []
-m = []
 for i in all_mesh:
-#    x.append(i[1][1])
-    m.append(i[1][2])
-y = [i for i in range(len(m))]
-plt.figure(1)
-#plt.plot(y, x, "--", c='r')
-plt.plot(y, m, "--", c='b')
+    x.append(np.mean(i[1:-1, 1:-1]))
+y = [i for i in range(len(x))]
+plt.figure(2)
+plt.plot(y, x, "--", c='r')
 #plt.savefig('temp_comparison.pdf', format='pdf', dpi=3000)
 
-plt.figure(2)
+plt.figure(3)
 mesh_min = mesh[1:-1, 1:-1].min() - 0.01
 mesh_max = mesh[1:-1, 1:-1].max()
 plt.imshow(mesh, vmin=mesh_min, vmax=mesh_max)

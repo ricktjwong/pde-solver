@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Dec  8 23:55:58 2018
+Created on Sat Dec  8 16:17:59 2018
 
 @author: ricktjwong
 """
@@ -11,19 +11,19 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import time
 
-scale = 2
+scale = 1
 h = 1E-3 / scale            # Step size h (in m)
 k_m = 150                   # Conductivity of silicon Microchip in W/m K
 k_c = 230                   # Conductivity of ceramic block in W/m K
 k_a = 248                   # Conductivity of aluminium fin in W/m K
 rho = 0.25 * h ** 2 * 500 * 1E6 / k_m  # Change in temperature of microprocessor every s
 T_a = 20                    # Ambient temperature
-alpha_m = h * 2 / k_m * (11.54 + 5.7 * 20)  # Constant for force convection for silicon
-alpha_c = h * 2 / k_c * (11.54 + 5.7 * 20)  # Constant for force convection for ceramic
-alpha_a = h * 2 / k_a * (11.54 + 5.7 * 20)  # Constant for force convection for aluminium
-n_fins = 10
-b = 5
-c = 1
+alpha_m = h * 2.62 / k_m    # Constant for natural convection for silicon
+alpha_c = h * 2.62 / k_c    # Constant for natural convection for ceramic
+alpha_a = h * 2.62 / k_a    # Constant for natural convection for aluminium
+n_fins = 4
+b = 4
+c = 2
 f_h = 30
 T = b+c
 rows = (f_h + 7) * scale + 2
@@ -43,7 +43,6 @@ m_idx_x1 = c_idx_x1 + 3 * scale
 m_idx_x2 = m_idx_x1 + 14 * scale
 m_idx_y1, m_idx_y2 = c_idx_y2, c_idx_y2 + 1 * scale
 
-
 def setup():
     mesh = np.zeros((rows, cols))        
     for i in range(n_fins):
@@ -62,10 +61,10 @@ def update_boundaries(m, c):
     u_mesh = m[0:3, 1:-1]
     d_mesh = m[rows-3:, 1:-1]
 
-    l_mesh[:,0] = l_mesh[:,-1] - c * (l_mesh[:,1] - T_a)
-    r_mesh[:,-1] = r_mesh[:,0] - c * (r_mesh[:,1] - T_a)
-    u_mesh[0] = u_mesh[-1] - c * (u_mesh[1] - T_a)
-    d_mesh[-1] = d_mesh[0] - c * (d_mesh[1] - T_a)
+    l_mesh[:,0] = l_mesh[:,-1] - c * (l_mesh[:,1] - T_a) ** (4/3)
+    r_mesh[:,-1] = r_mesh[:,0] - c * (r_mesh[:,1] - T_a) ** (4/3)
+    u_mesh[0] = u_mesh[-1] - c * (u_mesh[1] - T_a) ** (4/3)
+    d_mesh[-1] = d_mesh[0] - c * (d_mesh[1] - T_a) ** (4/3)
     
     m[1:-1, 0:3] = l_mesh
     m[1:-1, cols-3:] = r_mesh
@@ -80,6 +79,7 @@ def update_all_components(m):
     update_boundaries(m_mesh, alpha_m)
     fb_mesh = m[fb_idx_y1-1:fb_idx_y2+1, fb_idx_x1-1:fb_idx_x2+1].copy()
     update_boundaries(fb_mesh, alpha_a)
+    # 4 fins of width 2px, height 30, spacing 4
     f_mesh = [m[f_idx_y1-1:f_idx_y2+1, (T*i*scale):(c+T*i)*scale+2].copy() \
                 for i in range(n_fins)]
     for f in f_mesh:
@@ -121,7 +121,6 @@ while (True):
     # Update matrix for the microprocessor
     update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2] = \
     out[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]
-    # Update matrix for the fin block
     update[fb_idx_y1:fb_idx_y2, fb_idx_x1:fb_idx_x2] = \
     out[fb_idx_y1:fb_idx_y2, fb_idx_x1:fb_idx_x2]
     # Update matrix for the fins
@@ -142,7 +141,7 @@ print(end - start)
 
 x = []
 for i in all_mesh:
-    x.append(np.mean(i[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]))
+    x.append(i[31][1])    
 y = [i for i in range(len(x))]
 
 plt.figure(2)

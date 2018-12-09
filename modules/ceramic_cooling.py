@@ -1,87 +1,122 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Dec  4 17:22:14 2018
+Created on Sun Dec  9 03:09:37 2018
 
 @author: ricktjwong
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import signal
+import time
 
-h = 1E-3                    # Step size h (in m)
-k_m = 150                   # Conductivity of silicon Microchip in W/mm K
-k_c = 230                   # Conductivity of ceramic block in W/mm K
-del_T = 0.25 * h ** 2 * 500 * 1E6 / k_m           # Change in temperature of microprocessor every s
+scale = 2
+h = 1E-3 / scale            # Step size h (in m)
+k_m = 150                   # Conductivity of silicon Microchip in W/m K
+k_c = 230                   # Conductivity of ceramic block in W/m K
+k_a = 248                   # Conductivity of aluminium fin in W/m K
+rho = 0.25 * h ** 2 * 500 * 1E6 / k_m  # Change in temperature of microprocessor every s
 T_a = 20                    # Ambient temperature
-alpha_m = h * 2.62 / k_m    # Constant for natural convection
-alpha_c = h * 2.62 / k_c    # Constant for natural convection
-rows = 5
-cols = 16
+alpha_m = h * 2.62 / k_m    # Constant for natural convection for silicon
+alpha_c = h * 2.62 / k_c    # Constant for natural convection for ceramic
+rows = 3 * scale + 2
+cols = 20 * scale + 2
+
+# Initialise row and column indices for ceramic block
+c_idx_x1, c_idx_x2 = 1, cols - 1
+c_idx_y1, c_idx_y2 = 1, 2*scale + 1
+# Initialise row and column indices for microprocessor block
+m_idx_x1 = int((cols - 14*scale)/2)
+m_idx_x2 = m_idx_x1 + 14 * scale
+m_idx_y1, m_idx_y2 = c_idx_y2, c_idx_y2 + 1 * scale
 
 
-def update_boundaries(mesh):
-    rows = mesh.shape[0]
-    cols = mesh.shape[1]
-    c_l_mesh = mesh[1, 0:3]
-    m_l_mesh = mesh[2:-1, 0:3]
-    c_r_mesh = mesh[1, cols-3:]
-    m_r_mesh = mesh[2:-1, cols-3:]
-    c_u_mesh = mesh[0:3, 1:-1]
-    m_d_mesh = mesh[rows-3:, 1:-1]
-    
-    c_l_mesh[0] = c_l_mesh[-1] - alpha_c * (c_l_mesh[1] - T_a) ** (4/3)
-    m_l_mesh[:,0] = m_l_mesh[:,-1] - alpha_m * (m_l_mesh[:,1] - T_a) ** (4/3)
-    c_r_mesh[-1] = c_r_mesh[0] - alpha_c * (c_r_mesh[1] - T_a) ** (4/3)
-    m_r_mesh[:,-1] = m_r_mesh[:,0] - alpha_m * (m_r_mesh[:,1] - T_a) ** (4/3)
-    c_u_mesh[0] = c_u_mesh[-1] - alpha_c * (c_u_mesh[1] - T_a) ** (4/3)
-    m_d_mesh[-1] = m_d_mesh[0] - alpha_m * (m_d_mesh[1] - T_a) ** (4/3)
-    
-    mesh[1, 0:3] = c_l_mesh
-    mesh[2:-1, 0:3] = m_l_mesh
-    mesh[1, cols-3:] = c_r_mesh
-    mesh[2:-1, cols-3:] = m_r_mesh
-    mesh[0:3, 1:-1] = c_u_mesh
-    mesh[rows-3:, 1:-1] = m_d_mesh
+def setup():
+    mesh = np.zeros((rows, cols))        
+    mesh[c_idx_y1:c_idx_y2, c_idx_x1:c_idx_x2] = T_a                  # Initialise the ceramic block at T_a
+    mesh[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2] = T_a                  # Initialise the microprocessor at T_a
     return mesh
 
-mesh = np.zeros((rows, cols))
-mesh[1, 1:-1] = 20
-mesh[2:-1, 1:-1] = 20      # Initialise the inner mesh with T > T_a
 
-mesh = update_boundaries(mesh).copy()
+def update_boundaries(m, c):
+    rows = m.shape[0]
+    cols = m.shape[1]
+    l_mesh = m[1:-1, 0:3]
+    r_mesh = m[1:-1, cols-3:]
+    u_mesh = m[0:3, 1:-1]
+    d_mesh = m[rows-3:, 1:-1]
+
+    l_mesh[:,0] = l_mesh[:,-1] - c * (l_mesh[:,1] - T_a) ** (4/3)
+    r_mesh[:,-1] = r_mesh[:,0] - c * (r_mesh[:,1] - T_a) ** (4/3)
+    u_mesh[0] = u_mesh[-1] - c * (u_mesh[1] - T_a) ** (4/3)
+    d_mesh[-1] = d_mesh[0] - c * (d_mesh[1] - T_a) ** (4/3)
+    
+    m[1:-1, 0:3] = l_mesh
+    m[1:-1, cols-3:] = r_mesh
+    m[0:3, 1:-1] = u_mesh
+    m[rows-3:, 1:-1] = d_mesh
+    
+
+def update_all_components(m):
+    c_mesh = m[c_idx_y1-1:c_idx_y2+1, c_idx_x1-1:c_idx_x2+1].copy()
+    update_boundaries(c_mesh, alpha_c)
+    m_mesh = m[m_idx_y1-2:m_idx_y2+1, m_idx_x1-1:m_idx_x2+1].copy()
+    update_boundaries(m_mesh, alpha_m)
+    return c_mesh, m_mesh
+
+
+def update_mesh(m, c_mesh, m_mesh):
+    m[c_idx_y1-1:c_idx_y2+1, c_idx_x1-1:c_idx_x2+1] = c_mesh.copy()
+    m[m_idx_y1:m_idx_y2+1, m_idx_x1-1:m_idx_x2+1] = m_mesh[2:].copy()
+    return m
+
+mesh = setup()
+plt.imshow(mesh)
+c_mesh, m_mesh = update_all_components(mesh)
+mesh = update_mesh(mesh, c_mesh, m_mesh).copy()
 
 all_mesh = []
+plt.imshow(mesh)
 
+start = time.time()
 n = 0
-while (n < 20000):
+while (True):
     update = mesh.copy()
-    for j in range(1, cols-1):
-        for i in range(1, rows-1):
-            update[i][j] = 1/4 * (mesh[i-1][j] + mesh[i+1][j] 
-                                + mesh[i][j-1] + mesh[i][j+1])
-    update[2:-1, 1:-1] += del_T
-#    if np.linalg.norm(update[1:-1, 1:-1]/mesh[1:-1, 1:-1] - 1) < 1E-4:
-#        break
-    update = update_boundaries(update).copy()
+    # Define kernel for convolution                                         
+    kernel = np.array([[0,1,0],
+                       [1,0,1],
+                       [0,1,0]]) 
+    # Perform 2D convolution with input data and kernel 
+    out = signal.convolve2d(mesh, kernel,
+                            boundary='wrap', mode='same')/kernel.sum()
+    # Update matrix for the ceramic block    
+    update[c_idx_y1:c_idx_y2, c_idx_x1:c_idx_x2] = \
+    out[c_idx_y1:c_idx_y2, c_idx_x1:c_idx_x2]
+    # Update matrix for the microprocessor
+    update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2] = \
+    out[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]
+    update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2] += rho
+    if np.mean(update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]) / \
+       np.mean(mesh[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]) - 1 < 1E-6:
+        break
+    c_mesh, m_mesh = update_all_components(update)
+    update = update_mesh(update, c_mesh, m_mesh).copy()
     mesh = update.copy()
     all_mesh.append(mesh)
     n += 1
-
-print(mesh)
+end = time.time()
+print(end - start)
 
 x = []
-m = []
 for i in all_mesh:
-#    x.append(i[1][1])
-    m.append(i[2][1])
-y = [i for i in range(len(m))]
-plt.figure(1)
-#plt.plot(y, x, "--", c='r')
-plt.plot(y, m, "--", c='r')
+    x.append(np.mean(i[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]))
+y = [i for i in range(len(x))]
 
 plt.figure(2)
-mesh_min = mesh[1:-1, 1:-1].min() - 0.01
-mesh_max = mesh[1:-1, 1:-1].max()
+plt.plot(y, x, "--", c='r')
+
+plt.figure(3)
 masked = np.ma.masked_where(mesh < 0.01, mesh)
 plt.imshow(masked, cmap="rainbow")
+plt.show()
