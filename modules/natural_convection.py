@@ -72,7 +72,7 @@ def update_boundaries(m, c):
     m[rows-3:, 1:-1] = d_mesh
     
 
-def update_all_components(m):
+def update_all_boundaries(m):
     c_mesh = m[c_idx_y1-1:c_idx_y2+1, c_idx_x1-1:c_idx_x2+1].copy()
     update_boundaries(c_mesh, alpha_c)
     m_mesh = m[m_idx_y1-2:m_idx_y2+1, m_idx_x1-1:m_idx_x2+1].copy()
@@ -98,7 +98,7 @@ def update_mesh(m, c_mesh, m_mesh, fb_mesh, f_mesh):
 
 mesh = setup()
 plt.imshow(mesh)
-c_mesh, m_mesh, fb_mesh, f_mesh = update_all_components(mesh)
+c_mesh, m_mesh, fb_mesh, f_mesh = update_all_boundaries(mesh)
 mesh = update_mesh(mesh, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
 
 all_mesh = []
@@ -131,7 +131,7 @@ while (True):
     if np.mean(update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]) / \
        np.mean(mesh[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]) - 1 < 1E-6:
         break
-    c_mesh, m_mesh, fb_mesh, f_mesh = update_all_components(update)
+    c_mesh, m_mesh, fb_mesh, f_mesh = update_all_boundaries(update)
     update = update_mesh(update, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
     mesh = update.copy()
     all_mesh.append(mesh)

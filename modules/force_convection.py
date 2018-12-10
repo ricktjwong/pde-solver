@@ -68,7 +68,7 @@ def setup():
 def update_boundaries(m, c):
     """
     Calculate the values for boundaries using the Central Difference Scheme
-    (CDS). Each mesh passed represents a rectangular component of the entire
+    (CDS). Each mesh (m) represents a rectangular component of the entire
     structure
     """
     rows = m.shape[0]
@@ -90,7 +90,7 @@ def update_boundaries(m, c):
     m[rows-3:, 1:-1] = d_mesh
     
 
-def update_all_components(m):
+def update_all_boundaries(m):
     """
     Update boundaries for each building block of the entire structure
     """
@@ -146,50 +146,56 @@ def update_nonboundaries(m, n):
         m[f_idx_y1:f_idx_y2, (T*i*scale+1):(c+T*i)*scale+1]
 
 
-mesh = setup()
-plt.imshow(mesh)
-c_mesh, m_mesh, fb_mesh, f_mesh = update_all_components(mesh)
-mesh = update_mesh(mesh, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
+def solve_mesh(mesh, conv_ratio):
+    """
+    Iterate and solve for the temperature at every mesh point till the change
+    in average temperature of the microprocessor is below the convergence_ratio
+    """
+    n = 0
+    all_mesh = []
+    while (True):
+        update = mesh.copy()
+        # Define Jacobi filter kernel for convolution                                         
+        kernel = np.array([[0,1,0],
+                           [1,0,1],
+                           [0,1,0]]) 
+        # Perform 2D convolution with input data and Jacobi filter kernel
+        out = signal.convolve2d(mesh, kernel,
+                                boundary='wrap', mode='same')/kernel.sum()
+        update_nonboundaries(out, update)
+        update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2] += rho
+        m_mean_temp_1 = np.mean(mesh[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2])
+        m_mean_temp_2 = np.mean(update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2])
+        if m_mean_temp_2 / m_mean_temp_1 - 1 < conv_ratio: break
+        c_mesh, m_mesh, fb_mesh, f_mesh = update_all_boundaries(update)
+        update = update_mesh(update, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
+        mesh = update.copy()
+        all_mesh.append(mesh)
+        n += 1
+    return all_mesh
 
-all_mesh = []
-plt.imshow(mesh)
 
-start = time.time()
-n = 0
-while (True):
-    update = mesh.copy()
-    # Define Jacobi filter kernel for convolution                                         
-    kernel = np.array([[0,1,0],
-                       [1,0,1],
-                       [0,1,0]]) 
-    # Perform 2D convolution with input data and Jacobi filter kernel
-    out = signal.convolve2d(mesh, kernel,
-                            boundary='wrap', mode='same')/kernel.sum()
-    update_nonboundaries(out, update)
-    update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2] += rho
-    m_mean_temp_1 = np.mean(mesh[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2])
-    m_mean_temp_2 = np.mean(update[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2])
-    if m_mean_temp_2 / m_mean_temp_1 - 1 < 1E-6: break
-    c_mesh, m_mesh, fb_mesh, f_mesh = update_all_components(update)
-    update = update_mesh(update, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
-    mesh = update.copy()
-    all_mesh.append(mesh)
-    n += 1
-end = time.time()
-print(end - start)
-
-x = []
-for i in all_mesh:
-    x.append(np.mean(i[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]))
-y = [i for i in range(len(x))]
-
-plt.figure(2)
-plt.plot(y, x, "--", c='r')
-
-plt.figure(3)
-new_mesh = np.zeros((rows, cols))
-update_nonboundaries(mesh, new_mesh)
-
-masked = np.ma.masked_where(new_mesh < 0.01, new_mesh)
-plt.imshow(masked, cmap="rainbow")
-plt.show()
+#mesh = setup()
+#c_mesh, m_mesh, fb_mesh, f_mesh = update_all_boundaries(mesh)
+#mesh = update_mesh(mesh, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
+#
+#start = time.time()
+#all_mesh = solve_mesh(mesh, 1E-6)
+#end = time.time()
+#print(end - start)
+#
+#x = []
+#for i in all_mesh:
+#    x.append(np.mean(i[m_idx_y1:m_idx_y2, m_idx_x1:m_idx_x2]))
+#y = [i for i in range(len(x))]
+#
+#plt.figure(2)
+#plt.plot(y, x, "--", c='r')
+#
+#plt.figure(3)
+#final_mesh = np.zeros((rows, cols))
+#update_nonboundaries(all_mesh[-1], final_mesh)
+#
+#masked = np.ma.masked_where(final_mesh < 0.01, final_mesh)
+#plt.imshow(masked, cmap="rainbow")
+#plt.show()
