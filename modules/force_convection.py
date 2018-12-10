@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Dec  8 23:55:58 2018
-
 @author: ricktjwong
 """
 
@@ -11,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import time
 
-scale = 2
+scale = 4
 h = 1E-3 / scale            # Step size h (in m)
 k_m = 150                   # Conductivity of silicon Microchip in W/m K
 k_c = 230                   # Conductivity of ceramic block in W/m K
@@ -25,8 +24,8 @@ alpha_m = h * 2 / k_m * (11.54 + 5.7 * 20)
 alpha_c = h * 2 / k_c * (11.54 + 5.7 * 20)
 # Constant for force convection for aluminium
 alpha_a = h * 2 / k_a * (11.54 + 5.7 * 20)
-n_fins = 14
-b = 1
+n_fins = 5
+b = 5
 c = 1
 f_h = 30
 T = b+c

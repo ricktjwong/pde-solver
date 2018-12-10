@@ -19,19 +19,20 @@ start = time.time()
 all_mesh = fc.solve_mesh(mesh, 1E-6)
 end = time.time()
 print(end - start)
+print(np.mean(all_mesh[-1][fc.m_idx_y1:fc.m_idx_y2, fc.m_idx_x1:fc.m_idx_x2]))
 
-x = []
-for i in all_mesh:
-    x.append(np.mean(i[fc.m_idx_y1:fc.m_idx_y2, fc.m_idx_x1:fc.m_idx_x2]))
-y = [i for i in range(len(x))]
+#x = []
+#for i in all_mesh:
+#    x.append(np.mean(i[fc.m_idx_y1:fc.m_idx_y2, fc.m_idx_x1:fc.m_idx_x2]))
+#y = [i for i in range(len(x))]
+#
+#plt.figure(2)
+#plt.plot(y, x, "--", c='r')
 
-plt.figure(2)
-plt.plot(y, x, "--", c='r')
+#plt.figure(3)
+#final_mesh = np.zeros((fc.rows, fc.cols))
+#fc.update_nonboundaries(all_mesh[-1], final_mesh)
 
-plt.figure(3)
-final_mesh = np.zeros((fc.rows, fc.cols))
-fc.update_nonboundaries(all_mesh[-1], final_mesh)
-
-masked = np.ma.masked_where(final_mesh < 0.01, final_mesh)
-plt.imshow(masked, cmap="rainbow")
-plt.show()
+#masked = np.ma.masked_where(final_mesh < 0.01, final_mesh)
+#plt.imshow(masked, cmap="rainbow")
+#plt.show()
