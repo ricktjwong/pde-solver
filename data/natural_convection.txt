@@ -1,0 +1,8 @@
+CHANGE n_fins
+
+scale = 4
+b = 5
+c = 1
+f_h = 30
+
+1. n_fins = 5
