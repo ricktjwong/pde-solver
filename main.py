@@ -27,10 +27,10 @@ c_mesh, m_mesh, fb_mesh, f_mesh = nc.update_all_boundaries(mesh)
 mesh = nc.update_mesh(mesh, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
 
 start = time.time()
-all_mesh = nc.solve_mesh(mesh, 1E-6)
+final_temp = nc.solve_mesh(mesh, 1E-6)
 end = time.time()
 print(end - start)
-print(np.mean(all_mesh[-1][nc.m_idx_y1:nc.m_idx_y2, nc.m_idx_x1:nc.m_idx_x2]))
+print(final_temp)
 
 #x = []
 #for i in all_mesh:

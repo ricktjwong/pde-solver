@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 import time
 
-scale = 4
+scale = 2
 n_fins = 5
 b = 5
 c = 1
@@ -153,7 +153,7 @@ def solve_mesh(mesh, conv_ratio):
     in average temperature of the microprocessor is below the convergence_ratio
     """
     n = 0
-    all_mesh = []
+#    all_mesh = []
     while (True):
         update = mesh.copy()
         # Define Jacobi filter kernel for convolution                                         
@@ -171,9 +171,9 @@ def solve_mesh(mesh, conv_ratio):
         c_mesh, m_mesh, fb_mesh, f_mesh = update_all_boundaries(update)
         update = update_mesh(update, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
         mesh = update.copy()
-        all_mesh.append(mesh)
+#        all_mesh.append(mesh)
         n += 1
-    return all_mesh
+    return m_mean_temp_1
 
 
 #mesh = setup()
