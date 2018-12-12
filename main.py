@@ -9,41 +9,48 @@ Created on Tue Dec  4 15:13:10 2018
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import modules.natural_convection as nc
-import modules.force_convection as fc
+import modules.heat_structure as hst
 
-#mesh = fc.setup()
-#c_mesh, m_mesh, fb_mesh, f_mesh = fc.update_all_boundaries(mesh)
-#mesh = fc.update_mesh(mesh, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
-#
+"""
+Natural convection
+scale, b, c, f_h, n_fins
+"""
+
+#hs = hst.HeatStructure(2, 5, 2, 30, 5, convection_type="natural")
 #start = time.time()
-#all_mesh = fc.solve_mesh(mesh, 1E-6)
+#all_mesh = hs.solve_mesh()
 #end = time.time()
 #print(end - start)
-#print(np.mean(all_mesh[-1][fc.m_idx_y1:fc.m_idx_y2, fc.m_idx_x1:fc.m_idx_x2]))
+#print(np.mean(all_mesh[-1][hs.m_idx_y1:hs.m_idx_y2, hs.m_idx_x1:hs.m_idx_x2]))
 
-mesh = nc.setup()
-c_mesh, m_mesh, fb_mesh, f_mesh = nc.update_all_boundaries(mesh)
-mesh = nc.update_mesh(mesh, c_mesh, m_mesh, fb_mesh, f_mesh).copy()
+"""
+Force convection
+"""
 
-start = time.time()
-final_temp = nc.solve_mesh(mesh, 1E-6)
-end = time.time()
-print(end - start)
-print(final_temp)
+final = []
+for i in range(1, 2):
+    hs = hst.HeatStructure(i, 5, 2, 30, 5, convection_type="force")
+    start = time.time()
+    final_temp, n = hs.solve_mesh()
+    end = time.time()
+    print(end - start)
+    final.append([i, final_temp, n])
+    print(final)
+np.savetxt("run1.txt", final)
+#print(np.mean(all_mesh[-1][hs.m_idx_y1:hs.m_idx_y2, hs.m_idx_x1:hs.m_idx_x2]))
 
 #x = []
 #for i in all_mesh:
-#    x.append(np.mean(i[fc.m_idx_y1:fc.m_idx_y2, fc.m_idx_x1:fc.m_idx_x2]))
+#    x.append(np.mean(i[hs.m_idx_y1:hs.m_idx_y2, hs.m_idx_x1:hs.m_idx_x2]))
 #y = [i for i in range(len(x))]
-#
+
 #plt.figure(2)
 #plt.plot(y, x, "--", c='r')
-
+#
 #plt.figure(3)
-#final_mesh = np.zeros((fc.rows, fc.cols))
-#fc.update_nonboundaries(all_mesh[-1], final_mesh)
-
+#final_mesh = np.zeros((hs.rows, hs.cols))
+#hs.update_nonboundaries(all_mesh[-1], final_mesh)
+#
 #masked = np.ma.masked_where(final_mesh < 0.01, final_mesh)
 #plt.imshow(masked, cmap="rainbow")
 #plt.show()
