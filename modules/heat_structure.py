@@ -15,7 +15,7 @@ T_a = 20                    # Ambient temperature
 
 class HeatStructure():
     def __init__(self, scale, b, c, f_h, n_fins,
-                 conv_ratio = 1E-6, convection_type = "force"):
+                 conv_ratio = 1E-6, convection_type = "forced"):
         self.scale, self.b, self.c, self.f_h, self.n_fins, self.conv = \
         scale, b, c, f_h, n_fins, conv_ratio
         # Step size h (in m)
@@ -27,7 +27,7 @@ class HeatStructure():
             self.phi_c = self.h * 2.62 / k_c
             self.phi_a = self.h * 2.62 / k_a
             self.power = 4 / 3
-        elif convection_type == "force":
+        elif convection_type == "forced":
             self.phi_m = self.h * 2 / k_m * (11.54 + 5.7 * 20)
             self.phi_c = self.h * 2 / k_c * (11.54 + 5.7 * 20)
             self.phi_a = self.h * 2 / k_a * (11.54 + 5.7 * 20)
@@ -143,12 +143,31 @@ class HeatStructure():
             m[self.f_idx_y1-1:self.f_idx_y2,
               (self.T*i*self.scale):(self.c+self.T*i)*self.scale+2] \
               = f_mesh[i][0:-1].copy()
+        # Handle the overlap boundaries
+        m[self.fb_idx_y1-1][self.c*self.scale+1:-1][::self.T*self.scale] = \
+        (m[self.fb_idx_y1-1][self.c*self.scale+1:-1][::self.T*self.scale] + \
+         fb_mesh[0][self.c*self.scale+1:-1][::self.T*self.scale]) / 2
+        m[self.fb_idx_y1-1][self.T*self.scale:][::self.T*self.scale] = \
+        (m[self.fb_idx_y1-1][self.T*self.scale:][::self.T*self.scale] + \
+         fb_mesh[0][self.T*self.scale:][::self.T*self.scale]) / 2
         # Ceramic without the top boundary
         m[self.c_idx_y1:self.c_idx_y2+1,
           self.c_idx_x1-1:self.c_idx_x2+1] = c_mesh[1:].copy()
-        # Microprocessor without the top boundary
+        # Handle the overlap boundaries
+        m[self.c_idx_y1][self.c_idx_x1 - 1] = \
+        (m[self.c_idx_y1][self.c_idx_x1 - 1] + fb_mesh[-1][self.c_idx_x1 - 1]) / 2
+        m[self.c_idx_y1][self.c_idx_x2] = \
+        (m[self.c_idx_y1][self.c_idx_x2] + fb_mesh[-1][self.c_idx_x2]) / 2
+#        # Microprocessor without the top boundary
         m[self.m_idx_y1:self.m_idx_y2+1,
           self.m_idx_x1-1:self.m_idx_x2+1] = m_mesh[2:].copy()
+        # Handle the overlap boundaries
+        m[self.m_idx_y1][self.m_idx_x1 - 1] = \
+        (m[self.m_idx_y1][self.m_idx_x1 - 1] + \
+         c_mesh[-1][self.m_idx_x1 - self.c_idx_x1]) / 2
+        m[self.m_idx_y1][self.m_idx_x2] = \
+        (m[self.m_idx_y1][self.m_idx_x2] + \
+         c_mesh[-1][self.m_idx_x2 - self.c_idx_x2 - 1]) / 2
         return m
     
     def update_nonboundaries(self, m, n):
@@ -206,4 +225,5 @@ class HeatStructure():
                 print(n)
 #            all_mesh.append(self.mesh)
             n += 1
+#        return all_mesh
         return m_mean_temp_1, n
