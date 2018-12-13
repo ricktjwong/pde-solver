@@ -198,7 +198,7 @@ class HeatStructure():
         convergence_ratio
         """
         n = 0
-        all_mesh = []
+#        all_mesh = []
         while (True):
             update = self.mesh.copy()
             # Define Jacobi filter kernel for convolution                                         
@@ -223,7 +223,7 @@ class HeatStructure():
             self.mesh = update.copy()
             if n % 10000 == 0:
                 print(n)
-            all_mesh.append(self.mesh)
+#            all_mesh.append(self.mesh)
             n += 1
-        return all_mesh
+#        return all_mesh
         return m_mean_temp_1, n
