@@ -7,7 +7,7 @@ Created on Sun Dec  9 03:09:37 2018
 """
 
 import numpy as np
-from scipy import signal
+from utils.jacobi_method import jacobi_solver
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -126,6 +126,18 @@ class Microprocessor():
         # Update matrix for the microprocessor
         n[self.m_idx_y1:self.m_idx_y2, self.m_idx_x1:self.m_idx_x2] = \
         m[self.m_idx_y1:self.m_idx_y2, self.m_idx_x1:self.m_idx_x2]
+        
+    def jacobi_solver(self, x):
+        x_u = np.roll(x, -1, 0)
+        x_u[-1] = np.zeros((1, x.shape[1]))
+        x_d = np.roll(x, 1, 0)
+        x_d[0] = np.zeros((1, x.shape[1]))        
+        x_r = np.roll(x, 1, 1)
+        x_r[:,0] = np.zeros((1, x.shape[0]))        
+        x_l = np.roll(x, -1, 1)
+        x_l[:,-1] = np.zeros((1, x.shape[0]))        
+        y = (x_d + x_u + x_r + x_l) / 4
+        return y    
     
     def solve_mesh(self):
         """
@@ -137,13 +149,7 @@ class Microprocessor():
         all_mesh = []
         while (True):
             update = self.mesh.copy()
-            # Define Jacobi filter kernel for convolution                                         
-            kernel = np.array([[0,1,0],
-                               [1,0,1],
-                               [0,1,0]]) 
-            # Perform 2D convolution with input data and Jacobi filter kernel
-            out = signal.convolve2d(self.mesh, kernel,
-                                    boundary='wrap', mode='same')/kernel.sum()
+            out = jacobi_solver(update)
             self.update_nonboundaries(out, update)
             update[self.m_idx_y1:self.m_idx_y2,
                    self.m_idx_x1:self.m_idx_x2] += self.rho
@@ -174,17 +180,17 @@ y = [i for i in range(len(x))]
 
 print(x[-1])
 
-plt.figure(2)
-plt.plot(y, x, "--", c='r')
-
-plt.figure(3)
-final_mesh = np.zeros((mp.rows, mp.cols))
-mp.update_nonboundaries(all_mesh[-1], final_mesh)
-
-masked = np.ma.masked_where(final_mesh < 0.01, final_mesh)
-ax = plt.subplot(111)
-im = ax.imshow(masked, cmap='rainbow')
-divider = make_axes_locatable(ax)
-cax = divider.append_axes("right", size="5%", pad=0.05)
-plt.xlabel('$T$ / K', labelpad=20)
-plt.colorbar(im, cax=cax)
+#plt.figure(2)
+#plt.plot(y, x, "--", c='r')
+#
+#plt.figure(3)
+#final_mesh = np.zeros((mp.rows, mp.cols))
+#mp.update_nonboundaries(all_mesh[-1], final_mesh)
+#
+#masked = np.ma.masked_where(final_mesh < 0.01, final_mesh)
+#ax = plt.subplot(111)
+#im = ax.imshow(masked, cmap='rainbow')
+#divider = make_axes_locatable(ax)
+#cax = divider.append_axes("right", size="5%", pad=0.05)
+#plt.xlabel('$T$ / K', labelpad=20)
+#plt.colorbar(im, cax=cax)

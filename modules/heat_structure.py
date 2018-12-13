@@ -6,7 +6,7 @@ Created on Sat Dec  8 23:55:58 2018
 """
 
 import numpy as np
-from scipy import signal
+from utils.jacobi_method import jacobi_solver
 
 k_m = 150                   # Conductivity of silicon Microchip in W/m K
 k_c = 230                   # Conductivity of ceramic block in W/m K
@@ -190,22 +190,6 @@ class HeatStructure():
               (self.T*i*self.scale+1):(self.c+self.T*i)*self.scale+1] = \
             m[self.f_idx_y1:self.f_idx_y2,
               (self.T*i*self.scale+1):(self.c+self.T*i)*self.scale+1]
-            
-    def jacobi_solver(self, x):
-        x_u = np.roll(x, -1, 0)
-        x_u[-1] = np.zeros((1, x.shape[1]))
-        
-        x_d = np.roll(x, 1, 0)
-        x_d[0] = np.zeros((1, x.shape[1]))
-        
-        x_r = np.roll(x, 1, 1)
-        x_r[:,0] = np.zeros((1, x.shape[0]))
-        
-        x_l = np.roll(x, -1, 1)
-        x_l[:,-1] = np.zeros((1, x.shape[0]))
-        
-        y = (x_d + x_u + x_r + x_l) / 4
-        return y
     
     def solve_mesh(self):
         """
@@ -217,7 +201,7 @@ class HeatStructure():
 #        all_mesh = []
         while (True):
             update = self.mesh.copy()
-            out = self.jacobi_solver(update)
+            out = jacobi_solver(update)
             self.update_nonboundaries(out, update)
             update[self.m_idx_y1:self.m_idx_y2,
                    self.m_idx_x1:self.m_idx_x2] += self.rho

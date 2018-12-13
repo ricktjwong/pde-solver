@@ -30,7 +30,7 @@ Force convection
 final = []
 #fins = np.arange(15, 50, 5)
 #for i in range(12, 13):
-hs = hst.HeatStructure(4, 1, 1, 30, 30, conv_ratio=1E-6,
+hs = hst.HeatStructure(1, 2, 2, 30, 10, conv_ratio=1E-6,
                        convection_type="forced")
 start = time.time()
 final_temp, n = hs.solve_mesh()
