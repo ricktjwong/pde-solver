@@ -7,43 +7,38 @@ Created on Sat Dec  8 16:50:09 2018
 """
 
 import numpy as np
-from scipy import signal
-import numba
 import time
 
-
 # Inputs
-a = np.random.rand(100,100)
+a = np.random.rand(200,200)
 
-# Convert to numpy array
-arr = np.asarray(a,float)    
-
-# Define kernel for convolution                                         
-kernel = np.array([[0,1,0],
-                   [1,0,1],
-                   [0,1,0]]) 
-
-
-@numba.njit
-def convolve():
+def jacobi_loop(a):
     out = np.zeros(a.shape)
     for r in range(1, a.shape[0] - 1):
         for c in range(1, a.shape[1] - 1):
-            value = kernel * a[(r - 1):(r + 2), (c - 1):(c + 2)]
-            out[r, c] = value.sum()/4
+            out[r, c] = (a[r][c-1] + a[r][c+1] + a[r-1][c] + a[r+1][c]) / 4
     return out
 
+def jacobi_solver(x):
+    x_u = np.roll(x, -1, 0)
+    x_u[-1] = np.zeros((1, x.shape[1]))
+    x_d = np.roll(x, 1, 0)
+    x_d[0] = np.zeros((1, x.shape[1]))    
+    x_r = np.roll(x, 1, 1)
+    x_r[:,0] = np.zeros((1, x.shape[0]))    
+    x_l = np.roll(x, -1, 1)
+    x_l[:,-1] = np.zeros((1, x.shape[0]))
+    y = (x_d + x_u + x_r + x_l) / 4
+    return y
 
 start = time.time()
-# Perform 2D convolution with input data and kernel 
-out = signal.convolve2d(arr, kernel, boundary='wrap', mode='same')/kernel.sum()
+out = jacobi_loop(a)
 end = time.time()
 print(end - start)
 print(out[1:-1,1:-1].sum())
 
-
 start = time.time()
-out = convolve()
+out = jacobi_solver(a).copy()
 end = time.time()
 print(end - start)
 print(out[1:-1,1:-1].sum())

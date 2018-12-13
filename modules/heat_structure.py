@@ -190,6 +190,22 @@ class HeatStructure():
               (self.T*i*self.scale+1):(self.c+self.T*i)*self.scale+1] = \
             m[self.f_idx_y1:self.f_idx_y2,
               (self.T*i*self.scale+1):(self.c+self.T*i)*self.scale+1]
+            
+    def jacobi_solver(self, x):
+        x_u = np.roll(x, -1, 0)
+        x_u[-1] = np.zeros((1, x.shape[1]))
+        
+        x_d = np.roll(x, 1, 0)
+        x_d[0] = np.zeros((1, x.shape[1]))
+        
+        x_r = np.roll(x, 1, 1)
+        x_r[:,0] = np.zeros((1, x.shape[0]))
+        
+        x_l = np.roll(x, -1, 1)
+        x_l[:,-1] = np.zeros((1, x.shape[0]))
+        
+        y = (x_d + x_u + x_r + x_l) / 4
+        return y
     
     def solve_mesh(self):
         """
@@ -201,13 +217,7 @@ class HeatStructure():
 #        all_mesh = []
         while (True):
             update = self.mesh.copy()
-            # Define Jacobi filter kernel for convolution                                         
-            kernel = np.array([[0,1,0],
-                               [1,0,1],
-                               [0,1,0]]) 
-            # Perform 2D convolution with input data and Jacobi filter kernel
-            out = signal.convolve2d(self.mesh, kernel,
-                                    boundary='wrap', mode='same')/kernel.sum()
+            out = self.jacobi_solver(update)
             self.update_nonboundaries(out, update)
             update[self.m_idx_y1:self.m_idx_y2,
                    self.m_idx_x1:self.m_idx_x2] += self.rho
@@ -221,8 +231,8 @@ class HeatStructure():
             update = self.update_mesh(update, c_mesh, m_mesh,
                                       fb_mesh, f_mesh).copy()
             self.mesh = update.copy()
-#            if n % 10000 == 0:
-#                print(n)
+            if n % 10000 == 0:
+                print(n)
 #            all_mesh.append(self.mesh)
             n += 1
 #        return all_mesh

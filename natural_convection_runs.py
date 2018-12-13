@@ -25,8 +25,8 @@ scale, b, c, f_h, n_fins
 #    end = time.time()
 #    final.append([i, final_temp, n, (end - start)])
 #np.savetxt("natural_convection_vary_nfins.txt", final)
-
-# Vary fin thickness c
+#
+## Vary fin thickness c
 #final = []
 #fin_thickness = np.arange(1, 21, 1)
 #for i in fin_thickness:
@@ -36,18 +36,18 @@ scale, b, c, f_h, n_fins
 #    end = time.time()
 #    final.append([i, final_temp, n, (end - start)])
 #np.savetxt("natural_convection_vary_fin_thickness.txt", final)
-
-# Vary fin height f_h
-final = []
-fin_heights = np.arange(30, 145, 5)
-for i in fin_heights:
-    hs = hst.HeatStructure(2, 5, 1, i, 5, convection_type="natural")
-    start = time.time()
-    final_temp, n = hs.solve_mesh()
-    end = time.time()
-    final.append([i, final_temp, n, (end - start)])
-    print(final)
-np.savetxt("natural_convection_vary_fin_height.txt", final)
+#
+## Vary fin height f_h
+#final = []
+#fin_heights = np.arange(30, 145, 5)
+#for i in fin_heights:
+#    hs = hst.HeatStructure(2, 5, 1, i, 5, convection_type="natural")
+#    start = time.time()
+#    final_temp, n = hs.solve_mesh()
+#    end = time.time()
+#    final.append([i, final_temp, n, (end - start)])
+#    print(final)
+#np.savetxt("natural_convection_vary_fin_height.txt", final)
 
 # Vary fin separation b
 final = []
