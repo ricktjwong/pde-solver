@@ -6,7 +6,7 @@ Created on Sat Dec  8 23:55:58 2018
 """
 
 import numpy as np
-from utils.jacobi_method import jacobi_solver
+from utils.solvers import jacobi_solver
 
 k_m = 150                   # Conductivity of silicon Microchip in W/m K
 k_c = 230                   # Conductivity of ceramic block in W/m K
@@ -15,9 +15,10 @@ T_a = 20                    # Ambient temperature
 
 class HeatStructure():
     def __init__(self, scale, b, c, f_h, n_fins,
-                 conv_ratio = 1E-6, convection_type = "forced"):
-        self.scale, self.b, self.c, self.f_h, self.n_fins, self.conv = \
-        scale, b, c, f_h, n_fins, conv_ratio
+                 conv_ratio = 1E-6, convection_type = "forced",
+                 solver = jacobi_solver):
+        self.scale, self.b, self.c, self.f_h, self.n_fins, self.conv, \
+        self.solver = scale, b, c, f_h, n_fins, conv_ratio, solver
         # Step size h (in m)
         self.h = 1E-3 / self.scale
         # Change in temperature of microprocessor every s
@@ -199,17 +200,15 @@ class HeatStructure():
         """
         n = 0
 #        all_mesh = []
-        while (True):
+        while (n < 2000):
             update = self.mesh.copy()
-            out = jacobi_solver(update)
+            out = self.solver(self, update)
             self.update_nonboundaries(out, update)
-            update[self.m_idx_y1:self.m_idx_y2,
-                   self.m_idx_x1:self.m_idx_x2] += self.rho
             m_mean_temp_1 = np.mean(self.mesh[self.m_idx_y1:self.m_idx_y2,
                                               self.m_idx_x1:self.m_idx_x2])
             norm_temp_1 = np.linalg.norm(self.mesh)
             norm_temp_2 = np.linalg.norm(update)
-            if norm_temp_2 / norm_temp_1 - 1 < self.conv: break
+            if abs(norm_temp_2 / norm_temp_1 - 1) < self.conv: break
             c_mesh, m_mesh, fb_mesh, f_mesh = \
             self.update_all_boundaries(update)
             update = self.update_mesh(update, c_mesh, m_mesh,

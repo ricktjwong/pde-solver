@@ -1,0 +1,3 @@
+[
+  "tests/test_solvers.py::test_jacobi"
+]
