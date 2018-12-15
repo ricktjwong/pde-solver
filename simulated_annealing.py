@@ -87,13 +87,13 @@ def acceptance_probability(old, new, T):
 
 
 x0 = [2, 2, 30, 30]
-min_cost = [1000, x0.copy()]
+min_cost = 1000
+min_action = x0.copy()
 T = 1.0
-T_min = 0.001
-alpha = 0.9
-costs = []
+T_min = 0.00001 # previously was 0.001
+alpha = 0.8
 min_costs = []
-x = []
+min_actions = []
 
 while T > T_min:
     count = 0
@@ -103,19 +103,20 @@ while T > T_min:
                                convection_type="forced",
                                solver=solv.jacobi_solver)
         cost_new, n = hs.solve_mesh()
-        ep = acceptance_probability(min_cost[0], cost_new, T)
-        costs.append(cost_new)
+        ep = acceptance_probability(min_cost, cost_new, T)
         if ep > random.random():
-            min_cost = cost_new, x0.copy()
+            min_cost = cost_new
+            min_action = x0.copy()
             min_costs.append(min_cost)
+            min_actions.append(min_action)
         idx = random.choice([0, 1, 2, 3])
         move = get_action(idx)
         x0[idx] += move
-        x.append(x0.copy())
         count += 1
-        print(count)
-    np.savetxt("temp_run_forced_" + str(T) + ".txt",
-               [min_cost, min_costs, costs, x], fmt='%s')
+    print(min_costs)
+    print(min_actions)    
+    np.save("sim_annealing/costs" + str(T), min_costs)
+    np.save("sim_annealing/action" + str(T), min_actions)
     T = T * alpha
     
 #x0 = [5, 5, 50, 50]
