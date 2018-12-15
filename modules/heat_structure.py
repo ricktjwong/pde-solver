@@ -200,7 +200,7 @@ class HeatStructure():
         """
         n = 0
 #        all_mesh = []
-        while (n < 2000):
+        while (True):
             update = self.mesh.copy()
             out = self.solver(self, update)
             self.update_nonboundaries(out, update)
