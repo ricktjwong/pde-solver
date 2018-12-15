@@ -214,8 +214,8 @@ class HeatStructure():
             update = self.update_mesh(update, c_mesh, m_mesh,
                                       fb_mesh, f_mesh).copy()
             self.mesh = update.copy()
-            if n % 10000 == 0:
-                print(n)
+#            if n % 10000 == 0:
+#                print(n)
 #            all_mesh.append(self.mesh)
             n += 1
 #        return all_mesh
