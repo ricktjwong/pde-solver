@@ -101,8 +101,9 @@ while T > T_min:
         b, c, f_h, n_fins = x0
         hs = hst.HeatStructure(2, b, c, f_h, n_fins, conv_ratio=1E-6,
                                convection_type="forced",
-                               solver=solv.jacobi_solver)
+                               solver=solv.red_black_SOR)
         cost_new, n = hs.solve_mesh()
+        print(cost_new)
         ep = acceptance_probability(min_cost, cost_new, T)
         if ep > random.random():
             min_cost = cost_new
@@ -113,15 +114,16 @@ while T > T_min:
         move = get_action(idx)
         x0[idx] += move
         count += 1
+        print(count)
     print(min_costs)
     print(min_actions)    
     np.save("sim_annealing/costs" + str(T), min_costs)
     np.save("sim_annealing/action" + str(T), min_actions)
     T = T * alpha
     
-#x0 = [5, 5, 50, 50]
+#x0 = [10, 10, 60, 60]
 #b, c, f_h, n_fins = x0
 #hs = hst.HeatStructure(2, b, c, f_h, n_fins, conv_ratio=1E-6,
-#                       convection_type="natural", solver=solv.jacobi_solver)
+#                       convection_type="forced", solver=solv.red_black_SOR)
 #cost_new, n = hs.solve_mesh()
 #print(cost_new)

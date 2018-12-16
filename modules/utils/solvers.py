@@ -10,11 +10,9 @@ import numpy as np
 from scipy import signal
 
 
-def jacobi_solver(self, x):
+def jacobi_shift(x):
     """
-    Efficient implementation of the Jacobi method. Takes an array x, applies
-    the Jacobi pictorial operator and returns the new matrix y. This is done
-    by array shifting using np.roll, improving the time complexity
+    Avoids the use of for loops by doing array shifts
     """
     # Shift array up, add zeros to the bottom row
     x_u = np.roll(x, -1, 0)
@@ -29,12 +27,56 @@ def jacobi_solver(self, x):
     x_l = np.roll(x, -1, 1)
     x_l[:,-1] = np.zeros((1, x.shape[0]))
     y = (x_d + x_u + x_r + x_l) / 4
+    return y
+
+
+def jacobi_solver(self, x):
+    """
+    Efficient implementation of the Jacobi method. Takes an array x, applies
+    the Jacobi pictorial operator and returns the new matrix y. This is done
+    by array shifting using np.roll, improving the time complexity
+    """
+    y = jacobi_shift(x)
     # Add source term to the microprocessor mesh. We cannot decouble the solver
     # logic from the source update logic, since the rest requires source term
     # updates within each iteration
     y[self.m_idx_y1:self.m_idx_y2,
       self.m_idx_x1:self.m_idx_x2] += self.rho
     return y
+
+
+def red_black_SOR(self, x):
+    """
+    Insanely fast iteration method. This, coupled with array shifting to
+    implement the Jacobi pictorial operator, reduces both the number of
+    iterations and the speed of processing, avoiding the use of lethargic
+    Python for loops
+    """
+    w = 1.92
+    backup = x.copy()
+    # Apply the Jacobi pictorial operator on the array x
+    j = jacobi_shift(x)
+    b = np.ones(x.shape)
+    r = np.ones(x.shape)
+    # Create a checkerboard array of ones and zeros
+    # The original checkboard, 3x3 black and red checkboard looks the
+    # following, respectively. The ones for black are in the positions of the
+    # red, as they extract the red positions and vice versa
+    # b r b    0 1 0    1 0 1
+    # r b r    1 0 1    0 1 0
+    # b r b    0 1 0    1 0 1
+    b[::2,::2] = 0
+    b[1::2,1::2] = 0
+    r -= b
+    y = (1 - w) * x + w * j    
+    y[self.m_idx_y1:self.m_idx_y2, self.m_idx_x1:self.m_idx_x2] += w * self.rho
+    # For every even iteration, we update only the 'red' checkerboard points
+    # For every odd iteration, we update only the 'black' checkerboard points    
+    if self.n % 2 == 0:
+        final = b * y + r * backup		
+    else:
+        final = r * y + b * backup		
+    return final
 
 
 def jacobi_convolve(self, x):
@@ -78,19 +120,20 @@ def gauss_seidel(self, x):
     the new values calculated after each update are used to calculate the next
     update, unlike the Jacobi method which generates a new array
     """
-    # Update matrix for the fins
-    # This loops through the the columns in each row
-    for k in range(self.n_fins):
-        for i in range(self.f_idx_y1, self.f_idx_y2):
-            for j in range(self.T*k*self.scale+1,
-                           (self.c+self.T*k)*self.scale+1):
+    if hasattr(self, 'n_fins'):
+        # Update matrix for the fins
+        # This loops through the the columns in each row
+        for k in range(self.n_fins):
+            for i in range(self.f_idx_y1, self.f_idx_y2):
+                for j in range(self.T*k*self.scale+1,
+                               (self.c+self.T*k)*self.scale+1):
+                    x[i][j] = 1/4 * (x[i-1][j] + x[i+1][j]
+                                     + x[i][j-1] + x[i][j+1])
+        # Update matrix for the fin block
+        for i in range(self.fb_idx_y1, self.fb_idx_y2):
+            for j in range(self.fb_idx_x1, self.fb_idx_x2):
                 x[i][j] = 1/4 * (x[i-1][j] + x[i+1][j]
-                                 + x[i][j-1] + x[i][j+1])
-    # Update matrix for the fin block
-    for i in range(self.fb_idx_y1, self.fb_idx_y2):
-        for j in range(self.fb_idx_x1, self.fb_idx_x2):
-            x[i][j] = 1/4 * (x[i-1][j] + x[i+1][j]
-                            + x[i][j-1] + x[i][j+1])
+                                + x[i][j-1] + x[i][j+1])
     # Update matrix for the ceramic block
     for i in range(self.c_idx_y1, self.c_idx_y2):
         for j in range(self.c_idx_x1, self.c_idx_x2):
@@ -111,18 +154,19 @@ def SOR_solver(self, x):
     combination between Gauss-Seidel and Jacobi method
     """
     w = 1.7
-    # Update matrix for the fins
-    for k in range(self.n_fins):
-        for i in range(self.f_idx_y1, self.f_idx_y2):
-            for j in range(self.T*k*self.scale+1,
-                           (self.c+self.T*k)*self.scale+1):
+    if hasattr(self, 'n_fins'):
+        # Update matrix for the fins
+        for k in range(self.n_fins):
+            for i in range(self.f_idx_y1, self.f_idx_y2):
+                for j in range(self.T*k*self.scale+1,
+                               (self.c+self.T*k)*self.scale+1):
+                    x[i][j] = (1 - w) * x[i][j] + w/4 * \
+                              (x[i-1][j] + x[i+1][j] + x[i][j-1] + x[i][j+1])
+        # Update matrix for the fin block
+        for i in range(self.fb_idx_y1, self.fb_idx_y2):
+            for j in range(self.fb_idx_x1, self.fb_idx_x2):
                 x[i][j] = (1 - w) * x[i][j] + w/4 * \
                           (x[i-1][j] + x[i+1][j] + x[i][j-1] + x[i][j+1])
-    # Update matrix for the fin block
-    for i in range(self.fb_idx_y1, self.fb_idx_y2):
-        for j in range(self.fb_idx_x1, self.fb_idx_x2):
-            x[i][j] = (1 - w) * x[i][j] + w/4 * \
-                      (x[i-1][j] + x[i+1][j] + x[i][j-1] + x[i][j+1])
     # Update matrix for the ceramic block
     for i in range(self.c_idx_y1, self.c_idx_y2):
         for j in range(self.c_idx_x1, self.c_idx_x2):

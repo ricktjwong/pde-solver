@@ -6,12 +6,10 @@ Created on Fri Dec 14 03:40:36 2018
 @author: ricktjwong
 """
 
-import numpy as np
 import time
-import utils.solvers as solvers
+import modules.heat_structure as hst
+import modules.utils.solvers as solv
 
-np.random.seed(1)
-x = np.random.rand(500, 500)
 
 def test_jacobi():
     """
@@ -19,20 +17,26 @@ def test_jacobi():
     inner mesh values, and that the vectorised implementation is always faster
     that the loop version
     """
+    hs = hst.HeatStructure(1, 2, 2, 5, 6, convection_type="forced",
+                           solver=solv.jacobi_loop, conv_ratio=1E-3)
     start = time.time()
-    out = solvers.jacobi_loop(x)
+    jacobi_loop_T, n = hs.solve_mesh()
     end = time.time()
     jacobi_loop_time = (end - start)
-    jacobi_loop = out[1:-1,1:-1].sum()
 
+    hs = hst.HeatStructure(1, 2, 2, 5, 6, convection_type="forced",
+                           solver=solv.jacobi_solver, conv_ratio=1E-3)
     start = time.time()
-    out = solvers.jacobi_solver(x)
+    jacobi_fast_T, n = hs.solve_mesh()
     end = time.time()
     jacobi_fast_time = (end - start)
-    jacobi_fast = out[1:-1,1:-1].sum()
     
-    out = solvers.jacobi_convolve(x)
-    jacobi_conv = out[1:-1,1:-1].sum()    
+    hs = hst.HeatStructure(1, 2, 2, 5, 6, convection_type="forced",
+                       solver=solv.jacobi_convolve, conv_ratio=1E-3)
+
+    jacobi_conv_T, n = hs.solve_mesh()
 
     assert(jacobi_fast_time < jacobi_loop_time)
-    assert(jacobi_loop == jacobi_fast == jacobi_conv)
+    assert(abs(jacobi_loop_T - jacobi_fast_T) < 1E-6)
+    assert(abs(jacobi_loop_T - jacobi_conv_T) < 1E-6)
+    assert(abs(jacobi_conv_T - jacobi_fast_T) < 1E-6)

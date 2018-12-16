@@ -8,7 +8,7 @@ Created on Sat Dec 15 01:40:21 2018
 
 import numpy as np
 import matplotlib.pyplot as plt
-import utils.solvers as solv
+import modules.utils.solvers as solv
 import modules.ceramic_cooling as cc
 import modules.heat_structure as hst
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -25,12 +25,12 @@ No Heat Sink
 Ceramic cooling
 """
 
-mp = cc.Microprocessor(5, conv_ratio = 1E-8, solver = solv.jacobi_solver)
-T = np.load("data/ceramic_cooling/average_temps.npy")
-x = np.arange(1, len(T)+1, 1)
-plt.figure(figsize=(10, 7))
-plt.plot(x, T, c='r', linestyle='--')
-plt.savefig("ceramic_cooling_T.pdf", dpi=3000)
+#mp = cc.Microprocessor(5, conv_ratio = 1E-8, solver = solv.jacobi_solver)
+#T = np.load("data/ceramic_cooling/average_temps.npy")
+#x = np.arange(1, len(T)+1, 1)
+#plt.figure(figsize=(10, 7))
+#plt.plot(x, T, c='r', linestyle='--')
+#plt.savefig("ceramic_cooling_T.pdf", dpi=3000)
 
 #all_mesh = np.load("data/ceramic_cooling/all_mesh.npy")
 

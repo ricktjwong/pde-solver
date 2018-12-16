@@ -7,7 +7,7 @@ Created on Sun Dec  9 03:09:37 2018
 """
 
 import numpy as np
-from utils.solvers import jacobi_solver
+from modules.utils.solvers import jacobi_solver
 
 k_m = 150                   # Conductivity of silicon Microchip in W/m K
 k_c = 230                   # Conductivity of ceramic block in W/m K
@@ -49,10 +49,10 @@ class Microprocessor():
         """
         # Initialise the ceramic block at T_a
         self.mesh[self.c_idx_y1:self.c_idx_y2,
-                  self.c_idx_x1:self.c_idx_x2] = T_a
+                  self.c_idx_x1:self.c_idx_x2] = 9000
         # Initialise the microprocessor at T_a
         self.mesh[self.m_idx_y1:self.m_idx_y2,
-                  self.m_idx_x1:self.m_idx_x2] = T_a
+                  self.m_idx_x1:self.m_idx_x2] = 9000
 
     def initialise_boundaries(self):
         c_mesh, m_mesh = self.update_all_boundaries(self.mesh)
@@ -131,9 +131,7 @@ class Microprocessor():
         change in average temperature of the microprocessor is below the
         convergence_ratio
         """
-        n = 0
-        temps = []
-        all_mesh = []
+        self.n = 0
         while (True):
             update = self.mesh.copy()
             out = self.solver(self, update)
@@ -142,14 +140,9 @@ class Microprocessor():
                                               self.m_idx_x1:self.m_idx_x2])
             norm_temp_1 = np.linalg.norm(self.mesh)
             norm_temp_2 = np.linalg.norm(update)
-            if norm_temp_2 / norm_temp_1 - 1 < self.conv: break
+            if abs(norm_temp_2 / norm_temp_1 - 1) < self.conv: break
             c_mesh, m_mesh = self.update_all_boundaries(update)
             update = self.update_mesh(update, c_mesh, m_mesh).copy()
             self.mesh = update.copy()
-            if n % 10000 == 0:
-                all_mesh.append(self.mesh)
-            temps.append(m_mean_temp_1)
-            n += 1
-        all_mesh.append(self.mesh)
-        temps.append(m_mean_temp_1)
-        return all_mesh, temps, m_mean_temp_1, n
+            self.n += 1
+        return m_mean_temp_1, self.n

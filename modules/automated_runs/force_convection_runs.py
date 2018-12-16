@@ -11,7 +11,7 @@ import time
 import modules.heat_structure as hst
 
 """
-Natural convection
+Forced convection
 scale, b, c, f_h, n_fins
 """
 

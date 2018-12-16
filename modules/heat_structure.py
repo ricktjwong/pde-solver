@@ -6,7 +6,7 @@ Created on Sat Dec  8 23:55:58 2018
 """
 
 import numpy as np
-from utils.solvers import jacobi_solver
+from modules.utils.solvers import jacobi_solver
 
 k_m = 150                   # Conductivity of silicon Microchip in W/m K
 k_c = 230                   # Conductivity of ceramic block in W/m K
@@ -156,7 +156,8 @@ class HeatStructure():
           self.c_idx_x1-1:self.c_idx_x2+1] = c_mesh[1:].copy()
         # Handle the overlap boundaries
         m[self.c_idx_y1][self.c_idx_x1 - 1] = \
-        (m[self.c_idx_y1][self.c_idx_x1 - 1] + fb_mesh[-1][self.c_idx_x1 - 1]) / 2
+        (m[self.c_idx_y1][self.c_idx_x1 - 1]
+        + fb_mesh[-1][self.c_idx_x1 - 1]) / 2
         m[self.c_idx_y1][self.c_idx_x2] = \
         (m[self.c_idx_y1][self.c_idx_x2] + fb_mesh[-1][self.c_idx_x2]) / 2
 #        # Microprocessor without the top boundary
@@ -198,9 +199,10 @@ class HeatStructure():
         change in average temperature of the microprocessor is below the
         convergence_ratio
         """
-        n = 0
+        self.n = 0
 #        all_mesh = []
-        while (True):
+#        temps = []
+        while (self.n < 2000):
             update = self.mesh.copy()
             out = self.solver(self, update)
             self.update_nonboundaries(out, update)
@@ -214,9 +216,9 @@ class HeatStructure():
             update = self.update_mesh(update, c_mesh, m_mesh,
                                       fb_mesh, f_mesh).copy()
             self.mesh = update.copy()
-#            if n % 10000 == 0:
-#                print(n)
 #            all_mesh.append(self.mesh)
-            n += 1
+            self.n += 1
+#            temps.append(m_mean_temp_1)
 #        return all_mesh
-        return m_mean_temp_1, n
+        return m_mean_temp_1, self.n
+
