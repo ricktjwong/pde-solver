@@ -8,6 +8,8 @@ Created on Sat Dec 15 19:08:36 2018
 
 import numpy as np
 import time
+import sys
+sys.path.append("../../")
 import modules.utils.solvers as solv
 import modules.heat_structure as hst
 

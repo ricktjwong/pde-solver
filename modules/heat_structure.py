@@ -200,7 +200,7 @@ class HeatStructure():
         convergence_ratio
         """
         self.n = 0
-        temps = []
+#        temps = []
         while (True):
             update = self.mesh.copy()
             out = self.solver(self, update)
@@ -216,5 +216,5 @@ class HeatStructure():
                                       fb_mesh, f_mesh).copy()
             self.mesh = update.copy()
             self.n += 1
-            temps.append(m_mean_temp_1)
-        return temps, self.n
+#            temps.append(m_mean_temp_1)
+        return m_mean_temp_1, self.n
