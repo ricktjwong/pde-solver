@@ -44,3 +44,5 @@ Estimated total run time is 2 hours
 """
 
 fcs.plot_sweeps()
+
+plt.show()
