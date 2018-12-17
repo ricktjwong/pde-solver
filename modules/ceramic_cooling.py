@@ -49,10 +49,10 @@ class Microprocessor():
         """
         # Initialise the ceramic block at T_a
         self.mesh[self.c_idx_y1:self.c_idx_y2,
-                  self.c_idx_x1:self.c_idx_x2] = 9000
+                  self.c_idx_x1:self.c_idx_x2] = T_a
         # Initialise the microprocessor at T_a
         self.mesh[self.m_idx_y1:self.m_idx_y2,
-                  self.m_idx_x1:self.m_idx_x2] = 9000
+                  self.m_idx_x1:self.m_idx_x2] = T_a
 
     def initialise_boundaries(self):
         c_mesh, m_mesh = self.update_all_boundaries(self.mesh)
@@ -132,12 +132,14 @@ class Microprocessor():
         convergence_ratio
         """
         self.n = 0
+        temps = []
         while (True):
             update = self.mesh.copy()
             out = self.solver(self, update)
             self.update_nonboundaries(out, update)
             m_mean_temp_1 = np.mean(self.mesh[self.m_idx_y1:self.m_idx_y2,
                                               self.m_idx_x1:self.m_idx_x2])
+            temps.append(m_mean_temp_1)            
             norm_temp_1 = np.linalg.norm(self.mesh)
             norm_temp_2 = np.linalg.norm(update)
             if abs(norm_temp_2 / norm_temp_1 - 1) < self.conv: break
@@ -145,4 +147,4 @@ class Microprocessor():
             update = self.update_mesh(update, c_mesh, m_mesh).copy()
             self.mesh = update.copy()
             self.n += 1
-        return m_mean_temp_1, self.n
+        return temps, self.n

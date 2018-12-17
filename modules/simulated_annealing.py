@@ -10,21 +10,16 @@ import numpy as np
 import random
 import utils.solvers as solv
 import modules.heat_structure as hst
-import time
 
 """
 scale, b, c, f_h, n_fins
-We vary b, c, f_h, n_fins
-1 < b < 5
-1 < c < 5
-30 < f_h < 50
-6 < n_fins < 50
+b - fin separation
+c - fin thickness
+1 < b < 10
+1 < c < 10
+30 < f_h < 60
+6 < n_fins < 60
 """
-
-#b_min, b_max = 1, 5
-#c_min, c_max = 1, 5
-#f_h_min, f_h_max = 30, 50
-#n_fins_min, n_fins_max = 6, 50
 
 b_min, b_max = 1, 10
 c_min, c_max = 1, 10
@@ -86,44 +81,35 @@ def acceptance_probability(old, new, T):
     return a
 
 
+def simulate_annealing(x0, T, T_min, alpha):
+    min_costs = []
+    min_actions = []
+    min_cost = 1000
+    while T > T_min:
+        count = 0
+        while(count < 100):
+            b, c, f_h, n_fins = x0
+            hs = hst.HeatStructure(2, b, c, f_h, n_fins, conv_ratio=1E-6,
+                                   convection_type="natural",
+                                   solver=solv.red_black_SOR)
+            cost_new, n = hs.solve_mesh()
+            ep = acceptance_probability(min_cost, cost_new, T)
+            if ep > random.random():
+                min_cost = cost_new
+                min_action = x0.copy()
+                min_costs.append(min_cost)
+                min_actions.append(min_action)
+            idx = random.choice([0, 1, 2, 3])
+            move = get_action(idx)
+            x0[idx] += move
+            count += 1
+        np.save("sim_annealing/costs" + str(T), min_costs)
+        np.save("sim_annealing/action" + str(T), min_actions)
+        T = T * alpha
+        
 x0 = [2, 2, 30, 30]
-min_cost = 1000
-min_action = x0.copy()
 T = 1.0
-T_min = 0.00001 # previously was 0.001
+T_min = 0.00001
 alpha = 0.8
-min_costs = []
-min_actions = []
 
-while T > T_min:
-    count = 0
-    while(count < 100):
-        b, c, f_h, n_fins = x0
-        hs = hst.HeatStructure(2, b, c, f_h, n_fins, conv_ratio=1E-6,
-                               convection_type="forced",
-                               solver=solv.red_black_SOR)
-        cost_new, n = hs.solve_mesh()
-        print(cost_new)
-        ep = acceptance_probability(min_cost, cost_new, T)
-        if ep > random.random():
-            min_cost = cost_new
-            min_action = x0.copy()
-            min_costs.append(min_cost)
-            min_actions.append(min_action)
-        idx = random.choice([0, 1, 2, 3])
-        move = get_action(idx)
-        x0[idx] += move
-        count += 1
-        print(count)
-    print(min_costs)
-    print(min_actions)    
-    np.save("sim_annealing/costs" + str(T), min_costs)
-    np.save("sim_annealing/action" + str(T), min_actions)
-    T = T * alpha
-    
-#x0 = [10, 10, 60, 60]
-#b, c, f_h, n_fins = x0
-#hs = hst.HeatStructure(2, b, c, f_h, n_fins, conv_ratio=1E-6,
-#                       convection_type="forced", solver=solv.red_black_SOR)
-#cost_new, n = hs.solve_mesh()
-#print(cost_new)
+simulate_annealing(x0, T, T_min, alpha)

@@ -6,9 +6,24 @@ Created on Fri Dec 14 03:40:36 2018
 @author: ricktjwong
 """
 
+import sys
+sys.path.append("../")
+import numpy as np
 import time
 import modules.heat_structure as hst
 import modules.utils.solvers as solv
+
+
+def test_jacobi_shift():
+    """
+    Test the Jacobi array shifting method gives the average value of the
+    neighbouring numbers
+    """
+    x = np.array([[1,2,3],
+                  [4,5,6],
+                  [7,10,12]])
+    y = solv.jacobi_shift(x)
+    assert(y[1][1] == 5.5)
 
 
 def test_jacobi():
@@ -40,3 +55,4 @@ def test_jacobi():
     assert(abs(jacobi_loop_T - jacobi_fast_T) < 1E-6)
     assert(abs(jacobi_loop_T - jacobi_conv_T) < 1E-6)
     assert(abs(jacobi_conv_T - jacobi_fast_T) < 1E-6)
+    

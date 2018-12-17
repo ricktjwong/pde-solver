@@ -16,7 +16,7 @@ T_a = 20                    # Ambient temperature
 class HeatStructure():
     def __init__(self, scale, b, c, f_h, n_fins,
                  conv_ratio = 1E-6, convection_type = "forced",
-                 solver = jacobi_solver):
+                 solver = jacobi_solver, wind_speed = 20):
         self.scale, self.b, self.c, self.f_h, self.n_fins, self.conv, \
         self.solver = scale, b, c, f_h, n_fins, conv_ratio, solver
         # Step size h (in m)
@@ -29,9 +29,9 @@ class HeatStructure():
             self.phi_a = self.h * 2.62 / k_a
             self.power = 4 / 3
         elif convection_type == "forced":
-            self.phi_m = self.h * 2 / k_m * (11.54 + 5.7 * 20)
-            self.phi_c = self.h * 2 / k_c * (11.54 + 5.7 * 20)
-            self.phi_a = self.h * 2 / k_a * (11.54 + 5.7 * 20)
+            self.phi_m = self.h * 2 / k_m * (11.54 + 5.7 * wind_speed)
+            self.phi_c = self.h * 2 / k_c * (11.54 + 5.7 * wind_speed)
+            self.phi_a = self.h * 2 / k_a * (11.54 + 5.7 * wind_speed)
             self.power = 1            
         self.T = self.b + self.c
         self.rows = (self.f_h + 7) * self.scale + 2
@@ -200,13 +200,14 @@ class HeatStructure():
         convergence_ratio
         """
         self.n = 0
-#        temps = []
+        temps = []
         while (True):
             update = self.mesh.copy()
             out = self.solver(self, update)
             self.update_nonboundaries(out, update)
             m_mean_temp_1 = np.mean(self.mesh[self.m_idx_y1:self.m_idx_y2,
                                               self.m_idx_x1:self.m_idx_x2])
+            temps.append(m_mean_temp_1)                
             norm_temp_1 = np.linalg.norm(self.mesh)
             norm_temp_2 = np.linalg.norm(update)
             if abs(norm_temp_2 / norm_temp_1 - 1) < self.conv: break
@@ -215,6 +216,5 @@ class HeatStructure():
             update = self.update_mesh(update, c_mesh, m_mesh,
                                       fb_mesh, f_mesh).copy()
             self.mesh = update.copy()
-            self.n += 1
-#            temps.append(m_mean_temp_1)
-        return m_mean_temp_1, self.n
+            self.n += 1            
+        return temps, self.n

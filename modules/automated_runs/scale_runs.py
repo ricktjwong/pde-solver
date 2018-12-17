@@ -6,6 +6,8 @@ Created on Fri Dec 14 03:55:10 2018
 @author: ricktjwong
 """
 
+import sys
+sys.path.append("../../")
 import numpy as np
 import time
 import modules.heat_structure as hst
