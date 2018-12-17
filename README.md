@@ -30,20 +30,20 @@ Solve the elliptic Poisson partial differential equation using finite difference
 1. Ensure that Python version: 3.7.0 is installed
 2. Install project requirements:
 <pre>
-	$ pip install -r requirements.txt
+$ pip install -r requirements.txt
 </pre>
 3. Run unit tests
 <pre>
-	$ cd into project folder
-	$ pytest
+$ cd into project folder
+$ pytest
 </pre>
 4. Generate plots
 <pre>
-	python main_plots.py
+$ python main_plots.py
 </pre>
 5. Run code (will take about 10 hours to run everything, including sweeps and simulated annealing optimiser)
 <pre>
-	python main.py
+$ python main.py
 </pre>
 
 ### Usage of classes
@@ -62,8 +62,8 @@ Solve the elliptic Poisson partial differential equation using finite difference
 
 Example usage:
 <pre>
-	hs = HeatStructure(2, 5, 1, 30, 5, conv_ratio=1E-6, convection_type="natural", solver=solv.red_black_SOR)
-	T, n = hs.solve_mesh()
+hs = HeatStructure(2, 5, 1, 30, 5, conv_ratio=1E-6, convection_type="natural", solver=solv.red_black_SOR)
+T, n = hs.solve_mesh()
 </pre>
 
 2. Microprocessor - class which sets up a lone microprocessor with a ceramic case
@@ -74,8 +74,8 @@ Example usage:
 
 Example usage:
 <pre>
-	mp = Microprocessor(5, conv_ratio=1E-8, solver=solv.jacobi_solver)
-	T, n = mp.solve_mesh()
+mp = Microprocessor(5, conv_ratio=1E-8, solver=solv.jacobi_solver)
+T, n = mp.solve_mesh()
 </pre>
 
 ### Simulated Annealing
@@ -86,5 +86,5 @@ Example usage:
 4. Specify the factor alpha which determines how fast T falls
 
 <pre>
-	simulate_annealing(x0, T, T_min, alpha)	
+simulate_annealing(x0, T, T_min, alpha)	
 </pre>
