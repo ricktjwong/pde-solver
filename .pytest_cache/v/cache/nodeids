@@ -1,3 +1,5 @@
 [
-  "tests/test_solvers.py::test_jacobi"
+  "tests/test_solvers.py::test_jacobi_shift",
+  "tests/test_solvers.py::test_jacobi",
+  "tests/test_solvers.py::test_all_solvers"
 ]
