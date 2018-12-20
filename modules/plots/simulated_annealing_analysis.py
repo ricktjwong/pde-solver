@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-costs = np.load("../../data/sim_annealing/costs2.npy")
-actions = np.load("../../data/sim_annealing/actions2.npy")
+costs = np.load("../../data/sim_annealing/costs_forced.npy")
+actions = np.load("../../data/sim_annealing/actions_forced.npy")
 
 b, c, f, n = actions[:,0], actions[:,1], actions[:,2], actions[:,3]
 x = np.arange(len(b))
