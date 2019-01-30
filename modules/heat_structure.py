@@ -14,7 +14,7 @@ k_a = 248                   # Conductivity of aluminium fin in W/m K
 T_a = 20                    # Ambient temperature
 
 class HeatStructure():
-    def __init__(self, scale, b, c, f_h, n_fins,
+    def __init__(self, scale, b, c, f_h, n_fins, im,
                  conv_ratio = 1E-6, convection_type = "forced",
                  solver = jacobi_solver, wind_speed = 20):
         self.scale, self.b, self.c, self.f_h, self.n_fins, self.conv, \
@@ -36,10 +36,16 @@ class HeatStructure():
         self.T = self.b + self.c
         self.rows = (self.f_h + 7) * self.scale + 2
         self.cols = (self.T*(self.n_fins-1) + self.c) * self.scale + 2
-        self.mesh = np.zeros((self.rows, self.cols)) 
+        self.mesh = np.zeros((self.rows, self.cols))
         self.initialise_indices()
         self.initialise_temp()
         self.initialise_boundaries()
+        self.im = im
+
+    # initialization function: plot the background of each frame
+    def initialise_animation(self):
+        self.im.set_data(np.random.random((self.rows, self.cols)))
+        return [self.im]
     
     def initialise_indices(self):
         """
@@ -218,3 +224,29 @@ class HeatStructure():
             self.mesh = update.copy()
             self.n += 1            
         return temps, self.n
+    
+    def animate(self, i):
+        """
+        Iterate and solve for the temperature at every mesh point till the 
+        change in average temperature of the microprocessor is below the
+        convergence_ratio
+        """
+        self.n = 0
+        temps = []
+        update = self.mesh.copy()
+        out = self.solver(self, update)
+        self.update_nonboundaries(out, update)
+        m_mean_temp_1 = np.mean(self.mesh[self.m_idx_y1:self.m_idx_y2,
+                                          self.m_idx_x1:self.m_idx_x2])
+        temps.append(m_mean_temp_1)                
+        c_mesh, m_mesh, fb_mesh, f_mesh = \
+        self.update_all_boundaries(update)
+        update = self.update_mesh(update, c_mesh, m_mesh,
+                                  fb_mesh, f_mesh).copy()
+        self.mesh = update.copy()
+        self.n += 1
+        final_mesh = np.zeros((self.rows, self.cols))
+        self.update_nonboundaries(self.mesh, final_mesh)
+        masked = np.ma.masked_where(final_mesh < 0.01, final_mesh)
+        self.im.set_array(masked)
+        return [self.im]
