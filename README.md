@@ -2,6 +2,8 @@
 
 Solve the elliptic Poisson partial differential equation using finite difference methods.
 
+<img src="https://github.com/ricktjwong/pde-solver/blob/master/media/heat_diffusion.gif" width="400">
+
 <pre>
 .
 └── main.py                   				# Main program which contains all the code run for the project. These might take a while
