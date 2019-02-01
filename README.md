@@ -2,7 +2,7 @@
 
 Solve the elliptic Poisson partial differential equation using finite difference methods.
 
-<img src="https://github.com/ricktjwong/pde-solver/blob/master/media/heat_diffusion.gif" width="400">
+<img src="https://github.com/ricktjwong/pde-solver/blob/master/media/heat_diffusion.gif" width="500">
 
 <pre>
 .
